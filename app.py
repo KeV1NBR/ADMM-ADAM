@@ -23,9 +23,9 @@ def main():
     print("X3D_ref: ", ottawa['X3D_ref'].shape)
 
     # save mat
-    savemat('dataset/save_X3DL.mat', x3dl)
-    savemat('dataset/save_mask.mat', mask)
-    savemat('dataset/save_Ottawa.mat', ottawa)
+    # savemat('dataset/save_X3DL.mat', x3dl)
+    # savemat('dataset/save_mask.mat', mask)
+    # savemat('dataset/save_Ottawa.mat', ottawa)
     savemat('dataset/X3D_rec.mat', {'X3D_rec':X3d_rec})
 
 
@@ -55,7 +55,7 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     M_idx = np.kron(mask_2D, nz_idx)
     print('end kron...')
     M = M_idx[:172**2, :]
-    PtransP = M.reshape((172, 172, -1), order='F')
+    PtransP = M.reshape((172, 172, -1), order='F')# omega
     # matlab(1,2)意思？
     RP_tensor = np.einsum('kij, lk -> lij', PtransP, E.T) # (172,172,65536) (10, 172)
     RRtrps_tensor = np.einsum('ikj, lk -> ilj', RP_tensor, E.T) # (10,172,65536) (10, 172)
@@ -77,12 +77,14 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     for i in range(RRtrps_per.shape[0]):
         block[i,:,:] = LA.inv(RRtrps_per[i,:,:].reshape((10, -1), order='F') + I)
     block_3D = np.transpose(block, (1,2,0))
+    b = [block_3D[:, :, n] for n in range(block_3D.shape[2])]
+    S_left = block_diag(*(b))
 
     # 儲存暫時結果，給matlab進行視覺化呈現
-    savemat('dataset/block_3D.mat', {'block_3D':block_3D})
+    # savemat('dataset/block_3D.mat', {'block_3D':block_3D})
     # 讀進所產生之S_left.mat
-    S_left = loadmat('dataset/S_left.mat')
-    S_left = S_left['S_left']
+    #S_left = loadmat('dataset/S_left.mat')
+    #S_left = S_left['S_left']
     for i in tqdm(range(50), desc="update s"):
         if i ==0:
             # 初始化S2D及D
