@@ -1,5 +1,6 @@
 from scipy.io import loadmat, savemat
-from scipy.linalg import block_diag
+#from scipy.linalg import block_diag
+from scipy.sparse import csc_matrix, block_diag
 import numpy as np
 from numpy import linalg as LA
 #from PIL import Image
@@ -77,8 +78,8 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     for i in range(RRtrps_per.shape[0]):
         block[i,:,:] = LA.inv(RRtrps_per[i,:,:].reshape((10, -1), order='F') + I)
     block_3D = np.transpose(block, (1,2,0))
-    b = [block_3D[:, :, n] for n in range(block_3D.shape[2])]
-    S_left = block_diag(*(b))
+    b = [csc_matrix(block_3D[:, :, n]) for n in range(block_3D.shape[2])]
+    S_left = block_diag((b))
 
     # 儲存暫時結果，給matlab進行視覺化呈現
     # savemat('dataset/block_3D.mat', {'block_3D':block_3D})
