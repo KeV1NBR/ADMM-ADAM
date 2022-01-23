@@ -1,8 +1,8 @@
 ## Content
--[Introduction](#introduction)
--[ADMM-ADAM framework](#adnn-adam-framework)
--[Run the code](#run-the-code)
--[Reference](#reference)
+- [Introduction](#introduction)
+- [ADMM-ADAM framework](#adnn-adam-framework)
+- [Run the code](#run-the-code)
+- [Reference](#reference)
 ## Introduction
 ADMM and ADAM are two optimizers of paramount importance in convex optimization and deep learning. ADMM-ADAM can solve the problem of hyperspectral image inpainting. The framework was designed by Dr. Chia-Hsiang Lin in 2021.
 
