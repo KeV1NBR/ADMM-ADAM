@@ -1,6 +1,6 @@
 ## Content
 - [Introduction](#introduction)
-- [ADMM-ADAM framework](#adnn-adam-framework)
+- [ADMM-ADAM framework](#admm-adam-framework)
 - [Run the code](#run-the-code)
 - [Reference](#reference)
 ## Introduction
