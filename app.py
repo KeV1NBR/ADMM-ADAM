@@ -24,9 +24,6 @@ def main():
     print("X3D_ref: ", ottawa['X3D_ref'].shape)
 
     # save mat
-    # savemat('dataset/save_X3DL.mat', x3dl)
-    # savemat('dataset/save_mask.mat', mask)
-    # savemat('dataset/save_Ottawa.mat', ottawa)
     savemat('dataset/X3D_rec.mat', {'X3D_rec':X3d_rec})
 
 
@@ -41,12 +38,9 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     row, col , all_bands = X3D_corrupted.shape
     spatial_len=row*col
     X2D_DL = x3dl.reshape((-1,all_bands), order='F').T
-    # 計算講義E
+    # Compute E
     E = compute_basis(x3dl, N)
-   # savemat('dataset/E.mat', {"E":E})
-
     S_DL = np.dot(E.T, X2D_DL)
-    # savemat('dataset/S_DL.mat', {"S_DL":S_DL})
 
     ## ADMM
     mask_2D = mask.reshape((spatial_len,all_bands), order='F').T
@@ -57,53 +51,46 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     print('end kron...')
     M = M_idx[:172**2, :]
     PtransP = M.reshape((172, 172, -1), order='F')# omega
-    # matlab(1,2)意思？
     RP_tensor = np.einsum('kij, lk -> lij', PtransP, E.T) # (172,172,65536) (10, 172)
     RRtrps_tensor = np.einsum('ikj, lk -> ilj', RP_tensor, E.T) # (10,172,65536) (10, 172)
     savemat('dataset/tensor.mat', {"RP_tensor":RP_tensor, 'RRtrps_tensor':RRtrps_tensor})
 
     X2D_corrupted = X3D_corrupted.reshape((-1, all_bands), order='F').T
-    # 更新S時後面項帶入Ｒ做化簡後的結果
+    # When updating S, bring the latter term into R to simplify the result
     RPY = np.zeros((10, 1, 65536))
     for i in range(spatial_len):
         RPY[:,:,i] = np.dot(RP_tensor[:, :, i], X2D_corrupted[:,i].reshape((-1,1), order='F'))
     RPy = RPY.reshape((-1,1), order='F')
-    # 更新S時，前面RR'
+    # RR'
     RRtrps_per = np.transpose(RRtrps_tensor, (2,0,1))
-    #savemat('dataset/tensor.mat', {"RPy":RPy, "RRtrps_per":RRtrps_per})
-    # 更新S時，前項I計算
+    # Compute I
     I = mu/2 * np.eye(N)
     block = np.zeros(RRtrps_per.shape)
-    # 更新S時，前項之計算過程
+    # When updating S, the calculation process of the preceding item
     for i in range(RRtrps_per.shape[0]):
         block[i,:,:] = LA.inv(RRtrps_per[i,:,:].reshape((10, -1), order='F') + I)
     block_3D = np.transpose(block, (1,2,0))
     b = [csc_matrix(block_3D[:, :, n]) for n in range(block_3D.shape[2])]
     S_left = block_diag((b))
 
-    # 儲存暫時結果，給matlab進行視覺化呈現
-    # savemat('dataset/block_3D.mat', {'block_3D':block_3D})
-    # 讀進所產生之S_left.mat
-    #S_left = loadmat('dataset/S_left.mat')
-    #S_left = S_left['S_left']
     for i in tqdm(range(50), desc="update s"):
         if i ==0:
-            # 初始化S2D及D
+            # init S2D and D
             S2D = np.zeros((N,spatial_len))
             D=np.zeros((N,spatial_len))
-        # 更新Z
+        # update Z
         Z = (1/(mu+lam))*(lam*S_DL+mu*(S2D-D))
-        # 更新S時，後面的delta計算
+        # delta calculations
         DELTA = (Z+D)
         delta = DELTA.reshape((-1,1), order='F')
-        # 更新S時，後項之計算過程
+        # right term calculations
         s_right = RPy + (mu/2)*delta
-        # 更新S
+        # update S
         s = S_left@s_right
         S2D = s.reshape((N,65536), order='F')   
-        # 更新D
+        # update D
         D = D - S2D + Z 
-    # 還原影像 ＝ E * S2D 
+    # restore image ＝ E * S2D 
     X2D_rec=np.dot(E, S2D)
     X3D_rec = X2D_rec.T.reshape((256,256,172), order='F')
 
