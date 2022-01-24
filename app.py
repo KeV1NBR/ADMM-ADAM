@@ -2,9 +2,11 @@ from scipy.io import loadmat, savemat
 from scipy.linalg import block_diag
 import numpy as np
 from numpy import linalg as LA
+
 #from PIL import Image
 import datetime
 from tqdm import tqdm
+
 
 def main():
     # load dataset
@@ -39,6 +41,7 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
     # compute S_DL 
     row, col , all_bands = X3D_corrupted.shape
     spatial_len=row*col
+
     X2D_DL = x3dl.reshape((-1,all_bands), order='F').T
     # 計算講義E
     E = compute_basis(x3dl, N)
@@ -110,6 +113,7 @@ def ADMM_ADAM(X3D_corrupted, mask, x3dl):
 
 def compute_basis(x3dl, N):
     X = x3dl.reshape((-1, x3dl.shape[2]), order='F')
+
     M = X.shape[1]
     _, eV = LA.eigh(np.dot(X.T, X))
     E = eV[:,M-N:]
